@@ -1,0 +1,11 @@
+FROM osrm/osrm-backend:v5.22.0
+
+WORKDIR /data
+
+RUN wget https://download.geofabrik.de/asia/india/north-eastern-zone-latest.osm.pbf
+RUN osrm-extract -p /opt/car.lua /data/north-eastern-zone-latest.osm.pbf
+RUN osrm-partition /data/north-eastern-zone-latest.osrm
+RUN osrm-customize /data/north-eastern-zone-latest.osrm
+
+EXPOSE 5000
+CMD ["osrm-routed", "--algorithm", "mld", "north-eastern-zone-latest.osrm"]

@@ -1,0 +1,18 @@
+curl -fsSL https://test.docker.com -o test-docker.sh
+sudo sh test-docker.sh
+sudo groupadd docker
+sudo usermod -aG docker $USER
+sudo chmod 777 /var/run/docker.sock
+sudo systemctl enable docker.service
+sudo systemctl enable containerd.service
+
+wget https://download.geofabrik.de/asia/india/north-eastern-zone-latest.osm.pbf
+
+
+sudo docker volume create osrm
+sudo docker pull osrm/osrm-backend
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/car.lua /data/north-eastern-zone-latest.osm.pbf || echo "osrm-extract failed"
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-partition /data/north-eastern-zone-latest.osrm
+docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-customize /data/north-eastern-zone-latest.osrm
+docker run -d -p 5000:5000 --rm --name osrm -v "${PWD}:/data" osrm/osrm-backend osrm-routed --algorithm mld north-eastern-zone-latest.osrm || echo "osrm-extract failed"
+sudo docker run -p 9966:9966 osrm/osrm-frontend

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: osrm-india
+  labels:
+    app: osrm-india
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: osrm-india
+  template:
+    metadata:
+      labels:
+        app: osrm-india
+    spec:
+      containers:
+      - name: osrm-india
+        image: public.ecr.aws/k2y4j6l4/public:v2
+        ports:
+        - containerPort: 5000
+        resources:
+          limits:
+            cpu: "500m"  # 500 milliCPU (0.5 CPU)
+            memory: "512Mi"  # 512 Megabytes
+          requests:
+            cpu: "250m"  # 250 milliCPU (0.25 CPU)
+            memory: "256Mi"  # 256 Megabytes
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: osrm-india
+  labels:
+    app: osrm-india
+spec:
+  ports:
+  - port: 5000
+    targetPort: 5000
+    name: http
+  selector:
+    app: osrm-india
+  type: LoadBalancer

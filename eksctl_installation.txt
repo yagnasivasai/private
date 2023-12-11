@@ -1,0 +1,75 @@
+# for ARM systems, set ARCH to: `arm64`, `armv6` or `armv7`
+ARCH=amd64
+PLATFORM=$(uname -s)_$ARCH
+
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$PLATFORM.tar.gz"
+
+# (Optional) Verify checksum
+curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" | grep $PLATFORM | sha256sum --check
+
+tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
+
+sudo mv /tmp/eksctl /usr/local/bin
+
+eksctl create cluster --name=single --region=ap-south-1 --zones=ap-south-1a,ap-south-1b --without-nodegroup
+
+eksctl utils associate-iam-oidc-provider --region ap-south-1 --cluster single --approve
+
+
+eksctl create nodegroup --cluster=single --region=ap-south-1 --name=single-ng-public2 --node-type=t2.medium --nodes=1 
+--nodes-min=1 --nodes-max=2 --node-volume-size=20 --ssh-access --ssh-public-key=AzureAgent --managed --asg-access 
+--external-dns-access --full-ecr-access --appmesh-access --alb-ingress-access
+
+eksctl get clusters 
+eksctl get nodegroup --cluster=single
+
+eksctl delete nodegroup --cluster=sigle --name=single-ng-public1 
+eksctl delete cluster single
+aws eks --region ap-south-1 update-kubeconfig --name Test
+
+kubectl create service nodeport ns-service --tcp=80:80 --dry-run=client -o yaml kubectl create deployment nginx --image=nginx --dry-run=client -o yaml > deploy.yaml kubectl run nginx --image=nginx --dry-run=client -o yaml > pod.yaml
+
+kubectl scale deployment --replicas=2 kubectl edit deployment deploymentname kubectl get deployment
+
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+chmod +x kubectl
+mkdir -p ~/.local/bin
+mv ./kubectl ~/.local/bin/kubectl
+
+
+kubectl get nodes -o wide |  awk {'print $1" " $2 " " $7'} | column -t
+
+
+
+
+# Install Metrics Server
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml
+kubectl get deployment metrics-server -n kube-system
+
+# Generating load
+kubectl run --generator=run-pod/v1 apache-bench -i --tty --rm --image=httpd -- ab -n 500000 -c 1000 http://osrm-india.default.svc.cluster.local/ 
+kubectl run -i --tty --rm apache-bench --image=httpd -- /bin/sh
+# Inside the pod
+apt-get update
+apt-get install -y apache2-utils
+ab -n 500000 -c 1000 http://osrm-india.default.svc.cluster.local/
+
+
+
+
+
+## HPA
+kubectl autoscale deployment osrm --cpu-percent=50 --min=1 --max=10
+
+# Describe HPA
+kubectl describe hpa/hpa-demo-deployment 
+
+# List HPA
+kubectl get hpa
